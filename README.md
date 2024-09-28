@@ -22,21 +22,23 @@ version: '3'
 
 services:
   warp:
-    image: caomingjun/warp
-    container_name: warp
-    restart: always
-    ports:
-      - '1080:1080'
-    environment:
-      - WARP_SLEEP=2
-      # - WARP_LICENSE_KEY= # optional
-    cap_add:
-      - NET_ADMIN
-    sysctls:
-      - net.ipv6.conf.all.disable_ipv6=0
-      - net.ipv4.conf.all.src_valid_mark=1
-    volumes:
-      - ./data:/var/lib/cloudflare-warp
+	image: caomingjun/warp
+	container_name: warp
+	restart: always
+	ports:
+	  - '1080:1080'
+	environment:
+	  - WARP_SLEEP=2
+	  # - GOST_ARGS=-L=ss+ohttp://aes-256-gcm:password@:8338 # sample to expose shadowsocks protocol service with obfs
+	  # - WARP_LICENSE_KEY= # optional
+	  # - WARP_PROXY_PORT=40000 # set proxy port will change to proxy only mode
+	cap_add:
+	  - NET_ADMIN
+	sysctls:
+	  - net.ipv6.conf.all.disable_ipv6=0
+	  - net.ipv4.conf.all.src_valid_mark=1
+	volumes:
+	  - ./data:/var/lib/cloudflare-warp
 ```
 
 Try it out to see if it works:
@@ -54,6 +56,10 @@ You can configure the container through the following environment variables:
 - `WARP_SLEEP`: The time to wait for the WARP daemon to start, in seconds. The default is 2 seconds. If the time is too short, it may cause the WARP daemon to not start before using the proxy, resulting in the proxy not working properly. If the time is too long, it may cause the container to take too long to start. If your server has poor performance, you can increase this value appropriately.
 
 - `WARP_LICENSE_KEY`: The license key of the WARP client, which is optional. If you have subscribed to WARP+ service, you can fill in the key in this environment variable. If you have not subscribed to WARP+ service, you can ignore this environment variable.
+
+- `WARP_DNS_MODE`: The [dns famillies modes](https://developers.cloudflare.com/warp-client/get-started/linux/#using-1111-for-families) for the 1.1.1.1 support. default is `off`.
+
+- `WARP_PROXY_PORT`: The port of the warp proxy, which is optional. If not set, the warp will be the default mode. Othewise, it should be a valid port number and warp will run in [proxy only mode](https://blog.cloudflare.com/announcing-warp-for-linux-and-proxy-mode). WARP will bind a socks5 proxy on this port of localhost interface. And the socks5 could be exposed to host by gost, which default is 1080.
 
 Data persistence: Use the host volume `./data` to persist the data of the WARP client. You can change the location of this directory or use other types of volumes. If you modify the `WARP_LICENSE_KEY`, please delete the `./data` directory so that the client can detect and register again.
 
@@ -87,23 +93,24 @@ If you want to setup [WARP Connector](https://developers.cloudflare.com/cloudfla
 ```yaml
 services:
   warp:
-    image: caomingjun/warp
-    container_name: warp
-    restart: always
-    ports:
-      - '1080:1080'
-    environment:
-      - WARP_SLEEP=2
-      # - WARP_LICENSE_KEY= # optional
-    cap_add:
-      - NET_ADMIN
-    sysctls:
-      - net.ipv6.conf.all.disable_ipv6=0
-      - net.ipv4.conf.all.src_valid_mark=1
-      - net.ipv4.ip_forward=1
-    volumes:
-      - ./data:/var/lib/cloudflare-warp
-      - ./config/warp/mdm.xml:/var/lib/cloudflare-warp/mdm.xml
+	image: caomingjun/warp
+	container_name: warp
+	restart: always
+	ports:
+	  - '1080:1080'
+	environment:
+	  - WARP_SLEEP=2
+	  # - GOST_ARGS=-L=ss+ohttp://aes-256-gcm:password@:8338 # sample to expose shadowsocks protocol service with obfs
+	  # - WARP_LICENSE_KEY= # optional
+	cap_add:
+	  - NET_ADMIN
+	sysctls:
+	  - net.ipv6.conf.all.disable_ipv6=0
+	  - net.ipv4.conf.all.src_valid_mark=1
+	  - net.ipv4.ip_forward=1
+	volumes:
+	  - ./data:/var/lib/cloudflare-warp
+	  - ./config/warp/mdm.xml:/var/lib/cloudflare-warp/mdm.xml
 ```
 
 <summary><i>Sample Docker Compose File</i></summary  >

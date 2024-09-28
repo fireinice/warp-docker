@@ -15,15 +15,17 @@ COPY entrypoint.sh /entrypoint.sh
 COPY ./healthcheck /healthcheck
 
 # install dependencies
-RUN case ${TARGETPLATFORM} in \
+RUN --mount=type=cache,target=/var/lib/apt/lists,id=apt_lists_cache,sharing=locked \
+    --mount=type=cache,target=/var/cache/apt,id=apt_cache,sharing=locked \
+    case ${TARGETPLATFORM} in \
       "linux/amd64")   export ARCH="amd64" ;; \
       "linux/arm64")   export ARCH="armv8" ;; \
       *) echo "Unsupported TARGETPLATFORM: ${TARGETPLATFORM}" && exit 1 ;; \
     esac && \
     echo "Building for ${ARCH} with GOST ${GOST_VERSION}" &&\
     apt-get update && \
-    apt-get upgrade -y && \
-    apt-get install -y curl gnupg lsb-release sudo jq ipcalc && \
+    # apt-get upgrade -y && \
+    apt-get install -y curl gnupg lsb-release sudo jq ipcalc procps && \
     curl https://pkg.cloudflareclient.com/pubkey.gpg | gpg --yes --dearmor --output /usr/share/keyrings/cloudflare-warp-archive-keyring.gpg && \
     echo "deb [signed-by=/usr/share/keyrings/cloudflare-warp-archive-keyring.gpg] https://pkg.cloudflareclient.com/ $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/cloudflare-client.list && \
     apt-get update && \
@@ -46,6 +48,7 @@ RUN mkdir -p /home/warp/.local/share/warp && \
     echo -n 'yes' > /home/warp/.local/share/warp/accepted-tos.txt
 
 ENV GOST_ARGS="-L :1080"
+ENV WARP_DNS_MODE=off
 ENV WARP_SLEEP=2
 ENV REGISTER_WHEN_MDM_EXISTS=
 
